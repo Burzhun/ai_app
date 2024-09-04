@@ -1,0 +1,51 @@
+[tool.poetry]
+name = "lang-check"
+version = "0.1.0"
+description = ""
+authors = ["Andrey A Tyunyatkin <andtun@yandex.ru>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = "^0.111.0"
+pytest = "^8.2.2"
+language-tool-python = "^2.8"
+pydantic = "^2.7.3"
+scikit-learn = "^1.5.0"
+black = {extras = ["jupyter"], version = "^24.4.2"}
+flake8 = "^7.1.0"
+ipykernel = "^6.29.4"
+pandas = "^2.2.2"
+numpy = "<2"
+datasets = "^2.20.0"
+poethepoet = "^0.26.1"
+setuptools = "^70.0.0"
+errant = "<3"
+levenshtein = "^0.25.1"
+pymorphy2 = "0.8"
+pdoc3 = "^0.11.1"
+wandb = "^0.17.4"
+pdoc = "^14.6.0"
+transformers = "^4.43.2"
+torch = "^2.4.0"
+langchain = "^0.2.14"
+openai = "^1.40.6"
+python-dotenv = "^1.0.1"
+langchain-community = "^0.2.12"
+
+[tool.poe.tasks]
+_cd_sage_wheels = "cd ./sage/wheels"
+_install_augmentex = "poetry run pip install augmentex-1.0.3-py3-none-any.whl"
+_cd_sage = "cd .."
+_install_sage = "poetry run pip install -e .[errant]"
+clone_sage = "git clone https://github.com/ai-forever/sage.git"
+install_sage = ["_cd_sage_wheels", "_install_augmentex", "_cd_sage", "_install_sage"]
+run_server = "poetry run uvicorn src.server.main:app --host 0.0.0.0 --port 8000 --reload"
+
+[tool.flake8]
+max-line-length = 150
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

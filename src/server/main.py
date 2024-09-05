@@ -67,6 +67,9 @@ app.include_router(
     tags=["yandex_vision_ocr"]
 )
 
+@app.get("/test")
+async def root():
+    return {"message": "test"}
 
 class ImageData(BaseModel):
     image: str

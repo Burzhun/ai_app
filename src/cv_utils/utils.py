@@ -2,6 +2,8 @@ import base64
 import requests
 import subprocess
 import json
+import os
+
 
 
 def get_iam_token():
@@ -11,19 +13,30 @@ def get_iam_token():
     Returns:
         IAM-Token
 
-    """
-    output = subprocess.check_output("yc iam create-token", shell=True).decode('UTF-8').rstrip()
-    return output
+    """ 
+    try:
+        output = subprocess.check_output("yc iam create-token", shell=True).decode('UTF-8').rstrip()
+        return output
+    except:
+        return ""
 
 
-# YA_DIR_ID нужно подставить свою, от продовой учетки
-def api_request(file_name='sample_img.jpg', YA_DIR_ID='b1ghkpruumbocmh45sf2') -> json:
+def api_request(file_name='sample_img.jpg', YA_DIR_ID='') -> json:
     """
     Метод для обращения к API Yandex vision OCR
     Returns:
         JSON-Response полученный yandex vision OCR
     """
     IAM_TOKEN = get_iam_token()
+    if IAM_TOKEN=='IAM_TOKEN':
+        IAM_TOKEN = os.environ.get('IAM_TOKEN')
+    
+    if YA_DIR_ID=='':
+        YA_DIR_ID = os.environ.get("YA_DIR_ID")
+    
+    if not IAM_TOKEN or not YA_DIR_ID:
+        return []
+    
     with open(file_name, "rb") as f:
         encoded_image = base64.b64encode(f.read())
 
@@ -38,11 +51,14 @@ def api_request(file_name='sample_img.jpg', YA_DIR_ID='b1ghkpruumbocmh45sf2') ->
         'x-folder-id': f'{YA_DIR_ID}',
         'x-data-logging-enabled': 'true',
     }
-
-    response = requests.post('https://ocr.api.cloud.yandex.net/ocr/v1/recognizeText', headers=headers,
-                             data=json_body)
-    json_loads = json.loads(response.text)
-    return json_loads
+    try:
+        response = requests.post('https://ocr.api.cloud.yandex.net/ocr/v1/recognizeText', headers=headers,
+                                data=json_body,
+                                timeout=30)
+        json_loads = json.loads(response.text)
+        return json_loads
+    except Exception as e:
+        print(e)
 
 
 def json_to_text(json_loads) -> str:
@@ -57,3 +73,10 @@ def json_to_text(json_loads) -> str:
         res += i
     return res
 
+def textOneLine(s):
+    res = ""
+    for line in s.splitlines():
+        res = res + line
+        if not line[len(line)-1]=='-':
+            res = res + ' '
+    return res

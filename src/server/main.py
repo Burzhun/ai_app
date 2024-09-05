@@ -80,8 +80,11 @@ def upload(payload: ImageData):
 
     try:
         date = datetime.now().strftime('%Y-%m-%d__%H_%M_%S')
+        print('date')
         image = base64_to_image(payload.image)
+        print('image')
         s = 'images/img_'+str(date)+'.jpg'
+        print('image s')
         image.save(s)
         return {"error":0,"message": s}
 

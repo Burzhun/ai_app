@@ -83,15 +83,15 @@ def upload(payload: ImageData):
         image = base64_to_image(payload.image)
         s = 'images/img_'+str(date)+'.jpg'
         image.save(s)
-        return {"message": s}
+        return {"error":0,"message": s}
 
         
         
     except Exception as e:
         print(e)
-        return {"message": e}
+        return {"error":2,"message": e}
 
-    return {"message": ''}
+    return {"error":1,"message": ''}
 
 
 async def event_stream2(filePath: str):

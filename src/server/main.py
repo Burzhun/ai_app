@@ -94,14 +94,14 @@ def upload(payload: ImageData):
     return {"message": ''}
 
 
-async def event_stream(filePath: str):
+async def event_stream2(filePath: str):
     event_str = 'event:load_stage'
     data_str = f"data: Извлечение текста"
     yield f"{event_str}\n{data_str}\n\n"
     return
 
 
-async def event_stream2(filePath: str):
+async def event_stream(filePath: str):
     s=''
     try:
         # contents = file.file.read()

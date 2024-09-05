@@ -1,13 +1,19 @@
-from src.basemodels.nlp_models.base import BaseNLPModel, BaseNLPVerbosePrediction
+from src.basemodels.nlp_models.base import BaseNLPVerbosePrediction
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import torch
 from typing import List, Dict
 from src.loggers.basic_logger import get_logger
 
-logger = get_logger(name="base_logger")
+logger = get_logger(name='base_logger')
+
+def filter_words(word):
+    if word=='-':
+        return False
+    else:
+        return word[0].isalpha()
 
 
-class TransformerModel(BaseNLPModel):
+class TransformerModel:
     """
     Класс для проверки орфографии и пунктуации с использованием модели на основе Transformers.
 
@@ -28,9 +34,9 @@ class TransformerModel(BaseNLPModel):
     ]
 
     def __init__(
-        self,
-        model_name: str = "ai-forever/sage-fredt5-distilled-95m",
-        device: str = "cuda",
+            self,
+            model_name: str = "ai-forever/sage-fredt5-distilled-95m",
+            device: str = "cuda",
     ):
         """
         Инициализация токенизатора и модели.
@@ -50,9 +56,7 @@ class TransformerModel(BaseNLPModel):
         #             f', device - {self.device}')
 
         # Для короткого вывода
-        logger.info(
-            f"Initialised NLP model with following params: model - {model_name}"
-        )
+        logger.info(f'Initialised NLP model with following params: model - {model_name}')
 
     def predict_verbose(self, text: str) -> BaseNLPVerbosePrediction:
         """
@@ -81,13 +85,13 @@ class TransformerModel(BaseNLPModel):
 
         corrections = self._generate_corrections(text, corrected_text)
 
-        logger.info(
-            f"Generated corrected text (with list of all corrections) from initial text: initial text - {text}"
-        )
-        return BaseNLPVerbosePrediction(corrections=corrections, text=corrected_text)
+        logger.info(f'Generated corrected text (with list of all corrections) from initial text: initial text - {text}')
+        logger.info(f'corrected_text- {corrected_text}')
+        logger.info(f'corrections- {corrections}')
+        return BaseNLPVerbosePrediction(corrections=corrections, text=corrected_text),  corrections
 
     def _generate_corrections(
-        self, original_text: str, corrected_text: str
+            self, original_text: str, corrected_text: str
     ) -> List[Dict[str, str]]:
         """
         Генерирует список исправлений на основе оригинального и исправленного текста.
@@ -100,28 +104,31 @@ class TransformerModel(BaseNLPModel):
             List[Dict[str, str]]: Список исправлений.
         """
         corrections = []
-        original_words = original_text.split()
-        corrected_words = corrected_text.split()
+        original_words =  list(filter(filter_words, original_text.split()))
+        corrected_words =  list(filter(filter_words, corrected_text.split()))
+
+
 
         # Идем по минимальной длине списков
         for idx, (original_word, corrected_word) in enumerate(
-            zip(original_words, corrected_words)
+                zip(original_words, corrected_words)
         ):
             if original_word != corrected_word:
                 correction = {
                     "index": original_text.index(original_word),
-                    "error": original_word,
-                    "suggestions": [corrected_word],
+                    "wordIndex": idx,
+                    "error": original_word.replace("'", "\\'"),
+                    "suggestions": [corrected_word.replace('"', '\\"')],
                     "message": "",
                 }
                 corrections.append(correction)
 
         # Если есть оставшиеся слова в оригинальном тексте
         if len(original_words) > len(corrected_words):
-            for word in original_words[len(corrected_words) :]:
+            for word in original_words[len(corrected_words):]:
                 correction = {
                     "index": original_text.index(word),
-                    "error": word,
+                    "error": word.replace("'", "\\'"),
                     "suggestions": [],
                     "message": "",
                 }
@@ -129,7 +136,7 @@ class TransformerModel(BaseNLPModel):
 
         # Если есть добавленные слова в исправленном тексте
         if len(corrected_words) > len(original_words):
-            for word in corrected_words[len(original_words) :]:
+            for word in corrected_words[len(original_words):]:
                 correction = {
                     "index": len(original_text),
                     "error": "",
@@ -138,9 +145,7 @@ class TransformerModel(BaseNLPModel):
                 }
                 corrections.append(correction)
 
-        logger.info(
-            f"Generated list of all corrections based on text: text - {original_text}"
-        )
+        logger.info(f'Generated list of all corrections based on text: text - {original_text}')
         return corrections
 
     def predict(self, text: str) -> str:
@@ -154,10 +159,6 @@ class TransformerModel(BaseNLPModel):
             str: Исправленный текст.
         """
 
-        logger.info(
-            f"Generated corrected text from initial text: initial text - {text}"
-        )
-        return self.predict_verbose(text).text
-
-    def evaluate(self, *args, **kwargs):
-        raise NotImplementedError()
+        logger.info(f'Generated corrected text from initial text: initial text - {text}')
+        t, errors = self.predict_verbose(text)
+        return t.text, errors

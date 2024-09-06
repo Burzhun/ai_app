@@ -15,14 +15,13 @@ import time
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import random
-import os
+import os, traceback
 import re
 from datetime import datetime
 import asyncio
 from src.loggers.basic_logger import get_logger
 from dotenv import load_dotenv
 from src.cv_utils.utils import textOneLine
-import uvicorn
 
 load_dotenv()
 
@@ -67,9 +66,6 @@ app.include_router(
     tags=["yandex_vision_ocr"]
 )
 
-@app.get("/test")
-async def root():
-    return {"message": "test"}
 
 class ImageData(BaseModel):
     image: str
@@ -80,28 +76,19 @@ def upload(payload: ImageData):
 
     try:
         date = datetime.now().strftime('%Y-%m-%d__%H_%M_%S')
-        print('date')
         image = base64_to_image(payload.image)
-        print('image')
         s = 'images/img_'+str(date)+'.jpg'
-        print('image s')
         image.save(s)
-        return {"error":0,"message": s}
+        return {"message": s}
 
         
         
     except Exception as e:
         print(e)
-        return {"error":2,"message": e}
+        return {"message": e}
 
-    return {"error":1,"message": ''}
+    return {"message": ''}
 
-
-async def event_stream2(filePath: str):
-    event_str = 'event:load_stage'
-    data_str = f"data: Извлечение текста"
-    yield f"{event_str}\n{data_str}\n\n"
-    return
 
 
 async def event_stream(filePath: str):
@@ -141,13 +128,12 @@ async def event_stream(filePath: str):
         data_str = f"data: Ошибка"
         logger.error('Error 1')
         yield f"{event_str}\n{data_str}\n\n"
-        print(e)
+        print(traceback.format_exc())
         return
 
 @app.get("/stream")
 async def stream(name: str):
     return StreamingResponse(event_stream(name), media_type="text/event-stream")
-
 
 if __name__ == '__main__':
     uvicorn.run(app, port=8000, host='0.0.0.0')

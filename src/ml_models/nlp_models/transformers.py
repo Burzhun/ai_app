@@ -10,7 +10,7 @@ def filter_words(word):
     if word=='-':
         return False
     else:
-        return word[0].isalpha()
+        return word[0].isalpha() or word[0]=='«' or word[0]=='"'
 
 
 class TransformerModel:
@@ -107,43 +107,48 @@ class TransformerModel:
         original_words =  list(filter(filter_words, original_text.split()))
         corrected_words =  list(filter(filter_words, corrected_text.split()))
 
+        #logger.info(f'corrected_text - {corrected_text}')
+        #logger.info(f'original_words - {original_words}')
+       # logger.info(f'corrected_words - {corrected_words}')
 
+        j=0
+        i=0
+        while i<len(original_words):
+            if j>=len(corrected_words):
+                i=len(original_words)
+                continue 
+            original_word = original_words[i]
+            corrected_word = corrected_words[j]
+            #print(original_word,corrected_word)
 
-        # Идем по минимальной длине списков
-        for idx, (original_word, corrected_word) in enumerate(
-                zip(original_words, corrected_words)
-        ):
             if original_word != corrected_word:
-                correction = {
-                    "index": original_text.index(original_word),
-                    "wordIndex": idx,
-                    "error": original_word.replace("'", "\\'"),
-                    "suggestions": [corrected_word.replace('"', '\\"')],
-                    "message": "",
-                }
-                corrections.append(correction)
+                if i<len(original_words)-1 and original_word+original_words[i+1]==corrected_word:
+                    correction = {
+                        "index": original_text.index(original_word),
+                        "wordIndex": i,
+                        "error": original_word.replace("'", "\\'"),
+                        "suggestions": [corrected_word.replace('"', '\\"')],
+                        "message": "",
+                    }
+                    corrections.append(correction)
+                    i = i+1
+                else:
+                    if i<len(original_words)-1 and original_words[i+1]==corrected_word:
+                        i = i+1
+                    else:
+                        correction = {
+                            "index": original_text.index(original_word),
+                            "wordIndex": i,
+                            "error": original_word.replace("'", "\\'"),
+                            "suggestions": [corrected_word.replace('"', '\\"')],
+                            "message": "",
+                        }
+                        corrections.append(correction)
+            i = i+1
+            j = j+1
+            
 
-        # Если есть оставшиеся слова в оригинальном тексте
-        if len(original_words) > len(corrected_words):
-            for word in original_words[len(corrected_words):]:
-                correction = {
-                    "index": original_text.index(word),
-                    "error": word.replace("'", "\\'"),
-                    "suggestions": [],
-                    "message": "",
-                }
-                corrections.append(correction)
-
-        # Если есть добавленные слова в исправленном тексте
-        if len(corrected_words) > len(original_words):
-            for word in corrected_words[len(original_words):]:
-                correction = {
-                    "index": len(original_text),
-                    "error": "",
-                    "suggestions": [word],
-                    "message": "",
-                }
-                corrections.append(correction)
+       
 
         logger.info(f'Generated list of all corrections based on text: text - {original_text}')
         return corrections

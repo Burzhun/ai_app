@@ -27,9 +27,9 @@ def api_request(file_name='sample_img.jpg', YA_DIR_ID='') -> json:
     Returns:
         JSON-Response полученный yandex vision OCR
     """
-    #IAM_TOKEN = get_iam_token()
+    IAM_TOKEN = get_iam_token()
     #if IAM_TOKEN=='IAM_TOKEN':
-    IAM_TOKEN = os.environ.get('IAM_TOKEN')
+    #IAM_TOKEN = os.environ.get('IAM_TOKEN')
     
     if YA_DIR_ID=='':
         YA_DIR_ID = os.environ.get("YA_DIR_ID")
